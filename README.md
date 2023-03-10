@@ -1,4 +1,4 @@
-# MY MOVIE LIST - Full Stack
+# MY MOVIE LIST - Full Stacks
 
 ## Description
 my movie list app is full stack app that using REACT.JS, EXPRESS.JS, POSTGRESQL, and NODE.JS
