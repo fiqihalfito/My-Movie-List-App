@@ -1,13 +1,16 @@
 import { useState } from "react"
+import { useCookies } from "react-cookie"
 import Star from "../assets/icons/Star"
 import { addMovie, editMovie } from "../services/api"
 
 const Modal = ({ setShowModal, displayList, movie, mode }) => {
+    const [cookies, setCookie, removeCookie] = useCookies()
+
 
     const editMode = mode === 'edit'
 
     const [data, setData] = useState({
-        user_email: editMode ? movie.user_email : 'fiqihalfito@gmail.com',
+        user_email: editMode ? movie.user_email : cookies.Email,
         title: editMode ? movie.title : null,
         stars: editMode ? movie.stars : 0,
         date: editMode ? movie.date : new Date(),
