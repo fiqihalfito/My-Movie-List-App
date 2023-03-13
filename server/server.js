@@ -69,7 +69,7 @@ app.post('/login', async (req, res) => {
         })
 
         if (!user) {
-            throw new Error('there is no email')
+            throw { error: { name: 'email', message: 'no user with this email' } }
         }
 
         const match = await bcrypt.compare(password, user.hashed_password)
@@ -78,10 +78,10 @@ app.post('/login', async (req, res) => {
             const token = jwt.sign({ email }, 'secret', { expiresIn: '1hr' })
             res.json({ email: user.email, token })
         } else {
-            throw new Error('wrong password')
+            throw { error: { name: 'password', message: 'wrong password' } }
         }
     } catch (error) {
-        res.json({ error: error.message })
+        res.json(error)
     }
 })
 
@@ -105,7 +105,7 @@ app.post('/signup', async (req, res) => {
     } catch (error) {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
             if (error.code === 'P2002') {
-                res.json({ error: 'Email already exists' })
+                res.json({ error: { name: 'email', message: 'Email already exists' } })
                 return
             }
         }

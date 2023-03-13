@@ -1,49 +1,40 @@
 import { useState } from "react"
 import { useCookies } from "react-cookie"
+import FormInput from "./FormInput"
+import { useFormik, validateYupSchema } from 'formik'
+import { loginSchema } from "../validation"
 
 const Auth = () => {
     const [cookies, setCookie, removeCookie] = useCookies()
     const [isLoginPage, setIsLoginPage] = useState(true)
-    const [email, setEmail] = useState(null)
-    const [password, setPassword] = useState(null)
-    const [confirmPassword, setConfirmPassword] = useState(null)
-    const [error, setError] = useState(null)
     const [showSuccessSignup, setShowSuccessSignup] = useState(false)
 
 
-    const handleSubmit = async (e, endpoint) => {
-        e.preventDefault()
+
+    const handleSubmit = async (values, actions) => {
+        // e.preventDefault()
+
+        const endpoint = isLoginPage ? 'login' : 'signup'
+
+        if (!values.confirmPassword && endpoint == 'signup') {
+            actions.setFieldError('confirmPassword', 'Required')
+            return
+        }
 
         try {
-            if (!email || !password) {
-                throw new Error('input cant be empty')
-            }
-
-            if (!isLoginPage) {
-                if (password !== confirmPassword) {
-                    throw new Error('password not match')
-                }
-            }
-
-
-            setError(null)
-            setShowSuccessSignup(false)
-
             // fetch data
             const response = await fetch(`http://localhost:8000/${endpoint}`, {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email: values.email, password: values.password })
             })
 
-
-
             const data = await response.json()
-
             if (data.error) {
-                throw new Error(data.error)
+                actions.setFieldError(data.error.name, data.error.message)
+                return
             }
 
             if (response.ok && endpoint == 'signup') {
@@ -57,57 +48,58 @@ const Auth = () => {
                 window.location.reload()
             }
 
-
-            // console.log(data)
         } catch (error) {
             console.error(error)
-            setError(error.message)
         }
-
-
-        // login or signup
 
     }
 
+    const formik = useFormik({
+        initialValues: {
+            email: '',
+            password: '',
+            confirmPassword: ''
+        },
+        validationSchema: loginSchema,
+        validateOnChange: false,
+        validateOnBlur: false,
+        onSubmit: handleSubmit
+    })
+
+
     const viewLogin = (status) => {
-        setError(null)
+        formik.setErrors({})
         setShowSuccessSignup(false)
         setIsLoginPage(status)
     }
 
     return (
-        <div className="w-1/2 h-1/2 bg-white rounded">
-            <form className="flex flex-col">
-                <label htmlFor="email">Email</label>
-                <input
-                    type={'email'}
-                    id="email"
-                    name="email"
-                    onChange={(e) => setEmail(e.target.value)} />
-                <label htmlFor="password">password</label>
-                <input
-                    type={'password'}
-                    id="password"
-                    name="password"
-                    onChange={(e) => setPassword(e.target.value)} />
-                {!isLoginPage && <>
-                    <label htmlFor="confirm-password">confirm password</label>
-                    <input
-                        type={'password'}
-                        id="confirm-password"
-                        name="password"
-                        onChange={(e) => setConfirmPassword(e.target.value)} />
-                </>}
+        <div className="w-1/2 bg-slate-900 text-white rounded-xl overflow-hidden">
+            <form className="flex flex-col p-12" onSubmit={formik.handleSubmit}>
+                <FormInput type={'email'} name={'email'} handleChange={formik.handleChange} error={formik.errors.email} />
+                <FormInput type={'password'} name={'password'} handleChange={formik.handleChange} error={formik.errors.password} />
+                {!isLoginPage && <FormInput type={'password'} name={'confirmPassword'} handleChange={formik.handleChange} error={formik.errors.confirmPassword} />}
+
                 <input
                     type={'submit'}
-                    value="Submit"
-                    onClick={(e) => handleSubmit(e, isLoginPage ? 'login' : 'signup')} />
+                    value={isLoginPage ? "Login" : "Signup"}
+                    className="btn font-bold tracking-wider bg-emerald-400 w-min mx-auto cursor-pointer hover:bg-emerald-600 active:bg-emerald-700"
+                />
             </form>
-            {error && <p>{error}</p>}
+
+            {/* {error && <p>{error}</p>} */}
             {showSuccessSignup && <p>success signup</p>}
-            <div>
-                <button onClick={() => viewLogin(true)}>Login</button>
-                <button onClick={() => viewLogin(false)}>Signup</button>
+            <div className="grid grid-cols-2 font-bold ">
+                <button
+                    className={`${isLoginPage ? 'bg-violet-700' : 'bg-slate-800'} py-2 tracking-wider`}
+                    onClick={() => viewLogin(true)}>
+                    Login
+                </button>
+                <button
+                    className={`${!isLoginPage ? 'bg-violet-700' : 'bg-slate-800'} py-2 tracking-wider`}
+                    onClick={() => viewLogin(false)}>
+                    Signup
+                </button>
             </div>
         </div>
     )
